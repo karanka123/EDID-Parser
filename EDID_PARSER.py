@@ -13,29 +13,35 @@ parser = ArgumentParser(
                     1. --EDID_Path
 
                     Option Arguments:
-                    1. --dump
+                    1. --dumpEDID
 
                     """,
                     epilog='-------Thanks-------')
 
 parser.add_argument('--EDID_Path', type=str)
-parser.add_argument('--dump', action="store_true" )
+parser.add_argument('--dumpEDID', action="store_true" )
 parser.add_argument('--filename')
 
 args = parser.parse_args()
 EDID_Path = args.EDID_Path
 Dump_Name = args.filename
 
+
 def EDID_Collector(EDID_Path):
     Keyobject = (winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, EDID_Path, access=winreg.KEY_READ))
     EDID =winreg.EnumValue(Keyobject, 0)[1]
-    return EDID
+    Header = struct.unpack("<8B",EDID[0:8])
+    if ((Header[0] & Header[-1]) == 0) & (sum(Header[1:7]) == 1530):
+        return EDID
+    else:
+        print("Incorrect EDID format")
 
 EDID = EDID_Collector(EDID_Path)
+print(EDID)
 
 def BinaryDump(EDID, filename='dump'):
     with open(filename, "wb") as f:
         f.write(EDID)
 
-if args.dump:
+if args.dumpEDID:
     BinaryDump(EDID_Collector(EDID_Path), Dump_Name )
